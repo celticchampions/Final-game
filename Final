@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Rush</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #gameContainer {
+            width: 400px;
+            height: 500px;
+            position: relative;
+            background-color: #fff;
+            border: 2px solid #333;
+            overflow: hidden;
+        }
+        #targetColor {
+            width: 100px;
+            height: 100px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+        .tile {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .tile:hover {
+            transform: scale(1.1);
+        }
+        #score, #timer {
+            font-size: 24px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Color Rush</h1>
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 60</div>
+    <div id="targetColor"></div>
+    <div id="gameContainer"></div>
+    <button onclick="startGame()">Start Game</button>
+
+    <script>
+        const container = document.getElementById('gameContainer');
+        const targetColorDiv = document.getElementById('targetColor');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        
+        let score = 0;
+        let timeLeft = 60;
+        let gameActive = false;
+        let tileInterval;
+        let timerInterval;
+
+        function getRandomColor() {
+            return '#' + Math.floor(Math.random()*16777215).toString(16);
+        }
+
+        function createTile() {
+            if (!gameActive) return;
+
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            const isTarget = Math.random() < 0.3; // 30% chance to match target color
+            tile.style.backgroundColor = isTarget ? targetColorDiv.style.backgroundColor : getRandomColor();
+            tile.style.left = Math.random() * (container.offsetWidth - 60) + 'px';
+            tile.style.top = '-60px';
+
+            tile.addEventListener('click', () => {
+                if (gameActive) {
+                    if (tile.style.backgroundColor === targetColorDiv.style.backgroundColor) {
+                        score += 10;
+                        scoreDisplay.textContent = `Score: ${score}`;
+                    } else {
+                        score = Math.max(0, score - 5);
+                        scoreDisplay.textContent = `Score: ${score}`;
+                    }
+                    tile.remove();
+                }
+            });
+
+            container.appendChild(tile);
+
+            let fallSpeed = 2 + Math.random() * 3;
+            function fall() {
+                let top = parseFloat(tile.style.top);
+                if (top < container.offsetHeight) {
+                    tile.style.top = (top + fallSpeed) + 'px';
+                    requestAnimationFrame(fall);
+                } else {
+                    tile.remove();
+                }
+            }
+            fall();
+
+            setTimeout(() => {
+                if (tile.parentNode) tile.remove();
+            }, 3000);
+        }
+
+        function startGame() {
+            if (gameActive) return;
+            
+            gameActive = true;
+            score = 0;
+            timeLeft = 60;
+            scoreDisplay.textContent = `Score: ${score}`;
+            timerDisplay.textContent = `Time: ${timeLeft}`;
+            targetColorDiv.style.backgroundColor = getRandomColor();
+
+            // Clear existing tiles
+            container.innerHTML = '';
+
+            // Start spawning tiles
+            tileInterval = setInterval(createTile, 800);
+            
+            // Start timer
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Time: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(tileInterval);
+            clearInterval(timerInterval);
+            alert(`Game Over! Final Score: ${score}`);
+        }
+
+        // Initialize with a random target color
+        targetColorDiv.style.backgroundColor = getRandomColor();
+    </script>
+</body>
+</html>
